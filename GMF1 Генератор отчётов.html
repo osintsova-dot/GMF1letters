@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Speak&Smile · Генератор отчётов</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: #f4f1f9; min-height: 100vh;
+  padding: 16px 14px 40px; color: #222;
+}
+.wrap { max-width: 520px; margin: 0 auto; }
+.header {
+  background: #5B2D8E; border-radius: 14px;
+  padding: 14px 18px; margin-bottom: 14px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.header-title { color: white; font-weight: 800; font-size: 19px; }
+.header-sub { color: #F5A623; font-size: 12px; margin-top: 2px; }
+.header-badge {
+  background: #F5A623; color: #5B2D8E;
+  font-weight: 700; font-size: 11px;
+  padding: 4px 12px; border-radius: 20px;
+}
+.card {
+  background: white; border-radius: 12px;
+  padding: 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+  margin-bottom: 14px;
+}
+.field { margin-bottom: 16px; }
+.lbl {
+  display: block; font-size: 13px; font-weight: 600;
+  color: #5B2D8E; margin-bottom: 7px;
+}
+.lbl-hint { font-weight: 400; color: #aaa; font-size: 11px; }
+input[type=text], input[type=number], textarea {
+  width: 100%; padding: 10px 13px;
+  border-radius: 8px; border: 1.5px solid #ddd;
+  font-size: 14px; font-family: inherit; outline: none;
+  -webkit-appearance: none; appearance: none;
+}
+textarea { resize: vertical; min-height: 62px; }
+
+/* Pills and buttons */
+.pills { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 8px; }
+.pill {
+  padding: 7px 14px; border-radius: 20px;
+  border: 2px solid #ddd; background: white;
+  color: #666; font-size: 13px; font-weight: 500;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.pill.on { background: #5B2D8E; border-color: #5B2D8E; color: white; font-weight: 700; }
+
+.srow { display: flex; gap: 6px; }
+.sbtn {
+  flex: 1; padding: 11px 2px;
+  border-radius: 8px; border: 2px solid #ddd;
+  background: white; color: #666;
+  font-size: 16px; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.sbtn.on { background: #5B2D8E; border-color: #5B2D8E; color: white; font-weight: 700; }
+.shint { font-size: 11px; color: #999; font-style: italic; margin-top: 5px; min-height: 15px; }
+
+.orow { display: flex; flex-wrap: wrap; gap: 7px; }
+.obtn {
+  padding: 7px 13px; border-radius: 20px;
+  border: 2px solid #ddd; background: white;
+  color: #666; font-size: 12px; font-weight: 500;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.obtn.on { background: #5B2D8E; border-color: #5B2D8E; color: white; font-weight: 700; }
+
+.unit-info {
+  background: #FFF8E7; border-radius: 8px;
+  padding: 7px 11px; font-size: 12px; color: #5B2D8E;
+}
+.trow { display: flex; align-items: center; gap: 8px; }
+.trow input { width: 72px; }
+.slash { color: #bbb; font-size: 22px; }
+.fhint { font-size: 11px; color: #aaa; margin-top: 4px; }
+.pctprev { font-size: 13px; color: #5B2D8E; font-weight: 600; margin-top: 4px; min-height: 18px; }
+
+.genbtn {
+  width: 100%; padding: 14px; border-radius: 10px; border: none;
+  background: #5B2D8E; color: white;
+  font-weight: 700; font-size: 15px; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  margin-top: 2px;
+}
+.genbtn:disabled { background: #ccc; }
+
+.out-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.out-ttl { font-size: 14px; font-weight: 700; color: #5B2D8E; }
+.cpbtn {
+  padding: 6px 16px; border-radius: 20px;
+  border: 1.5px solid #5B2D8E; background: white; color: #5B2D8E;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.cpbtn.done { background: #5B2D8E; color: white; }
+.rempty {
+  min-height: 110px; display: flex; align-items: center; justify-content: center;
+  color: #ccc; text-align: center;
+  border: 2px dashed #d8ccee; border-radius: 10px;
+  font-size: 13px; padding: 20px;
+}
+.rbox {
+  background: #EDE7F6; border-radius: 10px;
+  padding: 16px; font-size: 14px; line-height: 1.8; display: none;
+}
+.rhint {
+  margin-top: 10px; padding: 10px 12px;
+  background: #FFF8E7; border-radius: 8px;
+  font-size: 12px; color: #777;
+  border-left: 3px solid #F5A623; display: none;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="header">
+  <div>
+    <div class="header-title">Speak&amp;Smile</div>
+    <div class="header-sub">Генератор отчётов · Give Me Five! 1</div>
+  </div>
+  <div class="header-badge">для педагога</div>
+</div>
+
+<div class="card">
+
+  <!-- Unit -->
+  <div class="field">
+    <span class="lbl">Unit</span>
+    <div class="pills" id="unitPills">
+      <button class="pill on" onclick="selUnit(0,this)">1</button>
+      <button class="pill" onclick="selUnit(1,this)">2</button>
+      <button class="pill" onclick="selUnit(2,this)">3</button>
+      <button class="pill" onclick="selUnit(3,this)">4</button>
+      <button class="pill" onclick="selUnit(4,this)">5</button>
+      <button class="pill" onclick="selUnit(5,this)">6</button>
+      <button class="pill" onclick="selUnit(6,this)">7</button>
+      <button class="pill" onclick="selUnit(7,this)">8</button>
+      <button class="pill" onclick="selUnit(8,this)">9</button>
+    </div>
+    <div class="unit-info" id="uinfo"><strong>Unit 1 — My Classroom</strong> · Сентябрь</div>
+  </div>
+
+  <!-- Name -->
+  <div class="field">
+    <label class="lbl" for="cname">Имя ребёнка</label>
+    <input type="text" id="cname" placeholder="Например: Иван Карпов" oninput="chk()">
+  </div>
+
+  <!-- Teacher -->
+  <div class="field">
+    <label class="lbl" for="tname">Педагог</label>
+    <input type="text" id="tname" placeholder="Имя педагога">
+  </div>
+
+  <!-- Vocab -->
+  <div class="field">
+    <span class="lbl">Лексика</span>
+    <div class="srow" id="vrow">
+      <button class="sbtn" onclick="selS('v',1,this)">1</button>
+      <button class="sbtn" onclick="selS('v',2,this)">2</button>
+      <button class="sbtn" onclick="selS('v',3,this)">3</button>
+      <button class="sbtn" onclick="selS('v',4,this)">4</button>
+      <button class="sbtn" onclick="selS('v',5,this)">5</button>
+    </div>
+    <div class="shint" id="vhint"></div>
+  </div>
+
+  <!-- Grammar -->
+  <div class="field">
+    <span class="lbl">Грамматика</span>
+    <div class="srow" id="grow">
+      <button class="sbtn" onclick="selS('g',1,this)">1</button>
+      <button class="sbtn" onclick="selS('g',2,this)">2</button>
+      <button class="sbtn" onclick="selS('g',3,this)">3</button>
+      <button class="sbtn" onclick="selS('g',4,this)">4</button>
+      <button class="sbtn" onclick="selS('g',5,this)">5</button>
+    </div>
+    <div class="shint" id="ghint"></div>
+  </div>
+
+  <!-- Activity -->
+  <div class="field">
+    <span class="lbl">Активность / работа в паре</span>
+    <div class="srow" id="arow">
+      <button class="sbtn" onclick="selS('a',1,this)">1</button>
+      <button class="sbtn" onclick="selS('a',2,this)">2</button>
+      <button class="sbtn" onclick="selS('a',3,this)">3</button>
+      <button class="sbtn" onclick="selS('a',4,this)">4</button>
+      <button class="sbtn" onclick="selS('a',5,this)">5</button>
+    </div>
+    <div class="shint" id="ahint"></div>
+  </div>
+
+  <!-- Attendance -->
+  <div class="field">
+    <span class="lbl">Посещаемость</span>
+    <div class="trow">
+      <input type="number" id="att" placeholder="7" min="0" max="8" style="width:72px">
+      <span style="color:#666;font-size:14px">/ 8 уроков</span>
+    </div>
+  </div>
+
+  <!-- Online -->
+  <div class="field">
+    <span class="lbl">Пропуски отработаны онлайн</span>
+    <div class="orow" id="orow">
+      <button class="obtn" onclick="selO('none',this)">Пропусков не было</button>
+      <button class="obtn" onclick="selO('yes',this)">Да, все</button>
+      <button class="obtn" onclick="selO('partial',this)">Частично</button>
+      <button class="obtn" onclick="selO('no',this)">Нет</button>
+    </div>
+  </div>
+
+  <!-- Homework -->
+  <div class="field">
+    <span class="lbl">ДЗ выполнено <span class="lbl-hint">(%)</span></span>
+    <input type="number" id="hw" placeholder="85" min="0" max="100" style="width:90px">
+    <div class="fhint">от общего числа заданных ДЗ за юнит</div>
+  </div>
+
+  <!-- Test -->
+  <div class="field">
+    <span class="lbl">Результат теста</span>
+    <div class="trow">
+      <input type="number" id="ts" placeholder="54" min="0" oninput="updPct()">
+      <span class="slash">/</span>
+      <input type="number" id="tt" placeholder="60" min="0" oninput="updPct()">
+    </div>
+    <div class="fhint">набрано / максимум</div>
+    <div class="pctprev" id="pctprev"></div>
+  </div>
+
+  <!-- Note -->
+  <div class="field">
+    <label class="lbl" for="note">Заметка <span class="lbl-hint">(необязательно)</span></label>
+    <textarea id="note" placeholder="Например: хорошо работает в паре, с предлогами пока путается"></textarea>
+  </div>
+
+  <button class="genbtn" id="gbtn" disabled onclick="gen()">Сгенерировать отчёт</button>
+</div>
+
+<div class="card">
+  <div class="out-hdr">
+    <div class="out-ttl">Текст отчёта</div>
+    <button class="cpbtn" id="cpbtn" style="display:none" onclick="cp()">Копировать</button>
+  </div>
+  <div class="rempty" id="rempty">Заполните форму выше<br>и нажмите «Сгенерировать»</div>
+  <div class="rbox" id="rbox"></div>
+  <div class="rhint" id="rhint">Скопируйте текст и вставьте в Telegram или приложение.</div>
+</div>
+
+</div>
+
+<script>
+var UNITS=[
+  {n:1,t:"My Classroom", m:"Сентябрь",v:"предметы класса",           g:"предлоги места (in / on / under)"},
+  {n:2,t:"My Toys",      m:"Октябрь", v:"игрушки",                   g:"описание игрушки (My favourite toy is...)"},
+  {n:3,t:"My Body",      m:"Ноябрь",  v:"части тела, внешность",     g:"описание внешности и эмоций"},
+  {n:4,t:"My Food",      m:"Декабрь", v:"продукты питания",          g:"I love / like / don't like..."},
+  {n:5,t:"Farm Animals", m:"Январь",  v:"животные фермы",            g:"can / can't"},
+  {n:6,t:"The Park",     m:"Февраль", v:"объекты парка",             g:"Where is he/she? (next to / behind...)"},
+  {n:7,t:"In Town",      m:"Март",    v:"места в городе, транспорт", g:"числа до 20, How many?"},
+  {n:8,t:"Clothes",      m:"Апрель",  v:"одежда",                    g:"Present Continuous (She's wearing...)"},
+  {n:9,t:"My Day",       m:"Май",     v:"ежедневные действия",       g:"распорядок дня (I wake up / have breakfast...)"}
+];
+
+var SL={1:"не усвоено",2:"слабо, нужна дополнительная работа",3:"справляется с поддержкой",4:"уверенно",5:"отлично, без подсказок"};
+var AL={1:"почти не включается",2:"активность ниже среднего",3:"включается, иногда нужно побуждение",4:"активен(а), хорошо работает в паре",5:"очень активен(а), инициативен(а)"};
+var OL={none:"пропусков не было",yes:"все пропуски отработаны онлайн",partial:"пропуски отработаны частично",no:"пропущенные уроки не отработаны"};
+
+var S={ui:0,v:0,g:0,a:0,o:""};
+
+function selUnit(i,btn){
+  S.ui=i;
+  document.querySelectorAll('#unitPills .pill').forEach(function(b){b.className='pill';});
+  btn.className='pill on';
+  var u=UNITS[i];
+  document.getElementById('uinfo').innerHTML='<strong>Unit '+u.n+' — '+u.t+'</strong> · '+u.m;
+  chk();
+}
+
+function selS(k,val,btn){
+  S[k]=val;
+  var rowId=k==='v'?'vrow':k==='g'?'grow':'arow';
+  var hintId=k==='v'?'vhint':k==='g'?'ghint':'ahint';
+  document.querySelectorAll('#'+rowId+' .sbtn').forEach(function(b){b.className='sbtn';});
+  btn.className='sbtn on';
+  document.getElementById(hintId).textContent=(k==='a'?AL:SL)[val];
+  chk();
+}
+
+function selO(val,btn){
+  S.o=val;
+  document.querySelectorAll('#orow .obtn').forEach(function(b){b.className='obtn';});
+  btn.className='obtn on';
+}
+
+function updPct(){
+  var s=parseFloat(document.getElementById('ts').value);
+  var t=parseFloat(document.getElementById('tt').value);
+  document.getElementById('pctprev').textContent=(s>0&&t>0)?'→ '+Math.round(s/t*100)+'%':'';
+}
+
+function chk(){
+  var ok=document.getElementById('cname').value.trim()&&S.v&&S.g&&S.a;
+  document.getElementById('gbtn').disabled=!ok;
+}
+
+function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
+
+function gen(){
+  var u=UNITS[S.ui];
+  var name=document.getElementById('cname').value.trim();
+  var teacher=document.getElementById('tname').value.trim()||'[Имя педагога]';
+  var note=document.getElementById('note').value.trim();
+  var ts=document.getElementById('ts').value;
+  var tt=document.getElementById('tt').value;
+  var att=document.getElementById('att').value;
+  var hw=document.getElementById('hw').value;
+  var v=S.v,g=S.g,a=S.a;
+
+  var vt={
+    1:'лексика юнита пока не усвоена — слова «'+u.v+'» требуют серьёзной дополнительной работы',
+    2:'лексика юнита («'+u.v+'») усвоена частично, нужна дополнительная практика',
+    3:'лексику юнита («'+u.v+'») осваивает постепенно, часть слов уже использует уверенно',
+    4:'лексику юнита усвоил(а) уверенно — «'+u.v+'» называет без затруднений',
+    5:'лексику юнита освоил(а) отлично — «'+u.v+'» использует свободно и точно'
+  }[v];
+  var gt={
+    1:'грамматическая конструкция «'+u.g+'» пока не усвоена',
+    2:'конструкция «'+u.g+'» усвоена частично, требует дополнительной практики',
+    3:'конструкция «'+u.g+'» в процессе освоения — с опорой справляется',
+    4:'конструкцию «'+u.g+'» применяет уверенно',
+    5:'конструкцию «'+u.g+'» использует свободно и без ошибок'
+  }[g];
+  var at={
+    1:'на уроках почти не включается в работу',
+    2:'на уроках активность ниже среднего, нужно постоянное вовлечение',
+    3:'на уроках включается, хотя иногда требует дополнительного побуждения',
+    4:'на уроках активен(а), хорошо работает в паре с одноклассниками',
+    5:'один из самых активных участников — инициативен(а), охотно помогает партнёру'
+  }[a];
+
+  var good=[],work=[];
+  if(v>=4)good.push(vt);else work.push(vt);
+  if(g>=4)good.push(gt);else work.push(gt);
+  if(a>=4)good.push(at);else work.push(at);
+
+  var goodL=good.length?'<p>✅ <strong>Что получается хорошо:</strong> '+good.map(function(t,i){return i===0?cap(t):t;}).join('; ')+'.</p>':'';
+  var workL=work.length?'<p>📌 <strong>Над чем работаем:</strong> '+work.map(function(t,i){return i===0?cap(t):t;}).join('; ')+'.</p>':'';
+
+  var statLines=[];
+  if(att){
+    var missed=8-parseInt(att);
+    var attStr='Посещаемость: '+att+'/8 уроков';
+    if(missed>0&&S.o)attStr+=' — '+OL[S.o];
+    statLines.push(attStr);
+  }
+  if(hw)statLines.push('ДЗ выполнено: '+hw+'%');
+  var statL=statLines.length?'<p>📋 <strong>Статистика:</strong><br>'+statLines.join('<br>')+'</p>':'';
+
+  var scaleL='<p>📊 <strong>Оценки по шкале 1–5:</strong><br>Лексика: '+v+'/5 · Грамматика: '+g+'/5 · Активность: '+a+'/5<br><em>(1 — не усвоено, 2 — слабо, 3 — с поддержкой, 4 — уверенно, 5 — отлично)</em></p>';
+
+  var testL='';
+  if(ts){
+    var pct=(tt&&parseFloat(tt)>0)?' ('+Math.round(parseFloat(ts)/parseFloat(tt)*100)+'%)':'';
+    testL='<p>📝 <strong>Тест:</strong> '+ts+(tt?'/'+tt:'')+' баллов'+pct+'</p>';
+  }
+  var noteL=note?'<p>💬 <strong>Заметка педагога:</strong> '+note+'</p>':'';
+
+  var html=[
+    '<p>Дорогие родители!</p>',
+    '<p>Unit '+u.n+' — <em>'+u.t+'</em> — завершён. Вот краткие итоги.</p>',
+    '<p>👤 <strong>Ученик:</strong> '+name+'</p>',
+    '<br>',
+    goodL,workL,
+    '<br>',
+    statL,scaleL,testL,noteL,
+    '<br>',
+    '<p>Результаты теста и динамика доступны в приложении «Твоя школа».</p>',
+    '<br>',
+    '<p>С уважением,<br>Команда Speak&amp;Smile | '+teacher+'</p>'
+  ].filter(Boolean).join('');
+
+  document.getElementById('rempty').style.display='none';
+  var box=document.getElementById('rbox');
+  box.style.display='block';
+  box.innerHTML=html;
+  var cb=document.getElementById('cpbtn');
+  cb.style.display='inline-block';
+  cb.textContent='Копировать';
+  cb.className='cpbtn';
+  document.getElementById('rhint').style.display='block';
+}
+
+function cp(){
+  var text=document.getElementById('rbox').innerText||'';
+  var btn=document.getElementById('cpbtn');
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){
+      btn.textContent='✓ Скопировано';btn.className='cpbtn done';
+      setTimeout(function(){btn.textContent='Копировать';btn.className='cpbtn';},2000);
+    });
+  } else {
+    // Fallback for Telegram WebView
+    var ta=document.createElement('textarea');
+    ta.value=text;
+    ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);
+    ta.focus();ta.select();
+    try{document.execCommand('copy');btn.textContent='✓ Скопировано';btn.className='cpbtn done';
+      setTimeout(function(){btn.textContent='Копировать';btn.className='cpbtn';},2000);}
+    catch(e){}
+    document.body.removeChild(ta);
+  }
+}
+</script>
+</body>
+</html>

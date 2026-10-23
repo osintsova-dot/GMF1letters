@@ -1344,7 +1344,7 @@ window.onload = function(){
   var out=document.getElementById('groupOutput'); if(!out) return;
   var box=document.createElement('div'); box.id='ssSend'; box.style.display='none';
   box.innerHTML='<h4>📨 Отправить родителям</h4><p>Отчёты уйдут Оксане Владимировне и Наталье Александровне на проверку, а после их «да» — каждой семье в её мессенджер. Кого не найду в BigBen, покажу ниже — тем отправьте как обычно.</p>'+
-    '<div class="row"><input id="ssCode" placeholder="Код учителя" autocomplete="off"><button id="ssBtn">Отправить</button></div><div id="ssSendMsg"></div>';
+    '<label style="display:flex;gap:8px;align-items:flex-start;font-size:13px;color:#3B1F78;margin:0 0 10px;cursor:pointer"><input type="checkbox" id="ssRepeat" style="margin-top:2px;flex:none;min-width:0"> Это повтор прошлого отчёта (сентябрь): добавить родителям пояснение, что дублируем</label><div class="row"><input id="ssCode" placeholder="Код учителя" autocomplete="off"><button id="ssBtn">Отправить</button></div><div id="ssSendMsg"></div>';
   out.parentNode.insertBefore(box,out.nextSibling);
   var code=document.getElementById('ssCode'),btn=document.getElementById('ssBtn'),msg=document.getElementById('ssSendMsg');
   try{code.value=localStorage.getItem('ss_tcode')||'';}catch(e){}
@@ -1354,12 +1354,13 @@ window.onload = function(){
     c.querySelectorAll('p,div,li,h1,h2,h3,h4,tr').forEach(function(b){b.append('\n');});
     return c.textContent.replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
   }
+  var REPEAT='Отчёты сентября отправлялись в чате приложения «Твоя школа». Если не увидели или не нашли, дублируем сюда ещё раз 👇';
   function items(){
-    var r=[];out.querySelectorAll('.greport-name').forEach(function(h){
+    var rep=document.getElementById('ssRepeat').checked; var r=[];out.querySelectorAll('.greport-name').forEach(function(h){
       var c=h.cloneNode(true);c.querySelectorAll('button').forEach(function(b){b.remove();});
       var t=h.nextElementSibling; if(!t) return;
       var text=t.getAttribute('data-text')||plain(t);
-      var name=c.textContent.trim(); if(name&&text.trim()) r.push({name:name,text:text.trim()});
+      var name=c.textContent.trim(); if(name&&text.trim()) r.push({name:name,text:(rep?REPEAT+'\n\n':'')+text.trim()});
     });return r;
   }
   function refresh(){
@@ -1368,6 +1369,7 @@ window.onload = function(){
     btn.disabled=false; btn.textContent='Отправить ('+n+')'; msg.textContent=''; msg.className='';
   }
   new MutationObserver(refresh).observe(out,{childList:true});
+  document.getElementById('ssRepeat').addEventListener('change',function(){ if(!sent) bid='b'+Date.now().toString(36)+Math.random().toString(36).slice(2,8); });
   function post(i,body){
     if(i>=URLS.length) return Promise.reject(new Error('нет связи с сервером'));
     var ctl=window.AbortController?new AbortController():null; var tm=setTimeout(function(){ctl&&ctl.abort();},25000);

@@ -1325,3 +1325,68 @@ window.onload = function(){
   if(tf) tf.style.display = u0.hasTest ? '' : 'none';
   buildPupilRows();
 };</script>
+<!-- Отправка отчётов родителям через школу: сводка уходит администраторам, родителям — после их «да» -->
+<style>
+#ssSend{max-width:560px;margin:14px auto 24px;padding:16px;border-radius:14px;background:#F7F4FC;border:1.5px solid #E2D8F5;font-family:inherit}
+#ssSend h4{margin:0 0 6px;font-size:15px;color:#3B1F78}
+#ssSend p{margin:0 0 10px;font-size:13px;color:#6B6280;line-height:1.45}
+#ssSend .row{display:flex;gap:8px;flex-wrap:wrap}
+#ssSend input{flex:1;min-width:140px;padding:10px 12px;border-radius:10px;border:1.5px solid #D9CEF0;font-size:15px}
+#ssSend button{padding:11px 16px;border-radius:10px;border:none;background:#6C3FC5;color:#fff;font-weight:700;font-size:14px;cursor:pointer}
+#ssSend button:disabled{opacity:.55;cursor:default}
+#ssSendMsg{margin-top:10px;font-size:13px;line-height:1.5;white-space:pre-line}
+#ssSendMsg.ok{color:#1F7A45}#ssSendMsg.err{color:#B3261E}
+</style>
+<script>
+(function(){
+  var PROG='gmf1';
+  var URLS=['https://d5d6o4mldv5m1nj5hvih.6brbn2wz.apigw.yandexcloud.net/nihao/reports/submit','https://nihao-bot.o-sintsova.workers.dev/reports/submit'];
+  var out=document.getElementById('groupOutput'); if(!out) return;
+  var box=document.createElement('div'); box.id='ssSend'; box.style.display='none';
+  box.innerHTML='<h4>📨 Отправить родителям</h4><p>Отчёты уйдут Оксане Владимировне и Наталье Александровне на проверку, а после их «да» — каждой семье в её мессенджер. Кого не найду в BigBen, покажу ниже — тем отправьте как обычно.</p>'+
+    '<div class="row"><input id="ssCode" placeholder="Код учителя" autocomplete="off"><button id="ssBtn">Отправить</button></div><div id="ssSendMsg"></div>';
+  out.parentNode.insertBefore(box,out.nextSibling);
+  var code=document.getElementById('ssCode'),btn=document.getElementById('ssBtn'),msg=document.getElementById('ssSendMsg');
+  try{code.value=localStorage.getItem('ss_tcode')||'';}catch(e){}
+  var bid='',sent=false;
+  function plain(el){ // текст с абзацами, даже если вкладка скрыта
+    var c=el.cloneNode(true); c.querySelectorAll('br').forEach(function(b){b.replaceWith('\n');});
+    c.querySelectorAll('p,div,li,h1,h2,h3,h4,tr').forEach(function(b){b.append('\n');});
+    return c.textContent.replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
+  }
+  function items(){
+    var r=[];out.querySelectorAll('.greport-name').forEach(function(h){
+      var c=h.cloneNode(true);c.querySelectorAll('button').forEach(function(b){b.remove();});
+      var t=h.nextElementSibling; if(!t) return;
+      var text=t.getAttribute('data-text')||plain(t);
+      var name=c.textContent.trim(); if(name&&text.trim()) r.push({name:name,text:text.trim()});
+    });return r;
+  }
+  function refresh(){
+    var n=items().length; box.style.display=n?'block':'none';
+    bid='b'+Date.now().toString(36)+Math.random().toString(36).slice(2,8); sent=false;
+    btn.disabled=false; btn.textContent='Отправить ('+n+')'; msg.textContent=''; msg.className='';
+  }
+  new MutationObserver(refresh).observe(out,{childList:true});
+  function post(i,body){
+    if(i>=URLS.length) return Promise.reject(new Error('нет связи с сервером'));
+    var ctl=window.AbortController?new AbortController():null; var tm=setTimeout(function(){ctl&&ctl.abort();},25000);
+    return fetch(URLS[i],{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body),signal:ctl&&ctl.signal})
+      .then(function(r){clearTimeout(tm);return r.json();}).catch(function(){clearTimeout(tm);return post(i+1,body);});
+  }
+  btn.addEventListener('click',function(){
+    if(sent) return;
+    var c=code.value.trim(); if(!c){msg.className='err';msg.textContent='Введите код учителя.';code.focus();return;}
+    var its=items(); if(!its.length) return;
+    btn.disabled=true; btn.textContent='Отправляю…'; msg.className=''; msg.textContent='';
+    post(0,{code:c,prog:PROG,bid:bid,items:its}).then(function(d){
+      if(!d||!d.ok){btn.disabled=false;btn.textContent='Отправить ('+its.length+')';msg.className='err';msg.textContent=(d&&d.error)||'Не получилось, попробуйте ещё раз.';return;}
+      try{localStorage.setItem('ss_tcode',c);}catch(e){}
+      sent=true; btn.textContent='✓ Отправлено на проверку';
+      msg.className='ok'; msg.textContent='Готово: '+d.found+' из '+d.total+' отчётов ждут проверки (№'+d.n+'). Родителям уйдут после «да» администратора.'+
+        (d.miss&&d.miss.length?'\n\n⚠️ Эти не найдены в BigBen — отправьте сами:\n'+d.miss.map(function(x){return '• '+x;}).join('\n'):'');
+    }).catch(function(){btn.disabled=false;btn.textContent='Отправить ('+its.length+')';msg.className='err';msg.textContent='Нет связи с сервером. Проверьте интернет и нажмите ещё раз.';});
+  });
+})();
+</script>
+

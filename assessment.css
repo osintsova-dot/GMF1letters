@@ -1,0 +1,75 @@
+.assessment-panel {
+  background: #faf7ff;
+  border: 1px solid #d8c9ed;
+  border-radius: 16px;
+  padding: 18px;
+  margin: 18px 0;
+  color: #30223f;
+}
+.assessment-panel h3 {
+  margin: 0 0 8px;
+  color: #59319e;
+}
+.assessment-panel p {
+  font-size: 13px;
+  line-height: 1.5;
+}
+.assessment-skill {
+  padding: 12px 0;
+  border-bottom: 1px solid #e5dcef;
+}
+.assessment-skill strong,
+.assessment-field label {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+.assessment-skill small {
+  display: block;
+  color: #655775;
+  line-height: 1.45;
+  margin-bottom: 8px;
+}
+.assessment-panel select,
+.assessment-panel textarea,
+.assessment-panel input {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  min-height: 44px;
+  background: white;
+  color: #30223f;
+  border: 1px solid #c9b9dc;
+  border-radius: 9px;
+  padding: 10px;
+}
+.assessment-field { margin-top: 15px; }
+.assessment-panel :focus-visible {
+  outline: 3px solid #b09bde;
+  outline-offset: 2px;
+}
+.assessment-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.assessment-actions button {
+  border: 1px solid #c9b9dc;
+  background: white;
+  color: #59319e;
+  border-radius: 9px;
+  padding: 10px;
+  cursor: pointer;
+}
+.assessment-actions button:hover { background: #eee5fa; }
+.assessment-status {
+  font-size: 12px;
+  color: #655775;
+  min-height: 18px;
+  margin-top: 8px;
+}
+@media (max-width: 480px) {
+  .assessment-panel { padding: 12px; }
+  .assessment-panel h3 { font-size: 18px; }
+}

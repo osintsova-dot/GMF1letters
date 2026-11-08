@@ -582,7 +582,7 @@ function updPct(){
   document.getElementById('pctprev').textContent=(s>0&&t>0)?'→ '+Math.round(s/t*100)+'%':'';
 }
 function chkOne(){
-  var ok=document.getElementById('cname').value.trim()&&S.v&&S.g&&S.a;
+  var ok=document.getElementById('cname').value.trim()&&(S.ui===3||(S.v&&S.g&&S.a));
   document.getElementById('gbtn').disabled=!ok;
 }
 
@@ -753,7 +753,8 @@ var REPORTS = {
 // ── Report builder ────────────────────────────────────────
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
 
-function buildReport(name,teacher,unitIdx,v,g,a,att,online,hw,app,ts,tt,note,of){
+function buildReport(name,teacher,unitIdx,v,g,a,att,online,hw,app,ts,tt,note,of,u3){
+  if(unitIdx===3) return U3.report(name,teacher,u3||{},att,of,online,hw,app,ts,tt,note);
   var u=UNITS[unitIdx];
   var rdata=REPORTS[unitIdx];
   function fill(s){ return s.replace(/\{name\}/g,name); }
@@ -829,11 +830,11 @@ function genOne(){
   var ts=document.getElementById('ts').value;
   var tt=document.getElementById('tt').value;
   var note=document.getElementById('note').value.trim();
-  var txt=buildReport(name,teacher,S.ui,S.v,S.g,S.a,att,S.o,hw,S.app,ts,tt,note);
+  var txt=buildReport(name,teacher,S.ui,S.v,S.g,S.a,att,S.o,hw,S.app,ts,tt,note,undefined,U3.read("one"));
   document.getElementById('rempty').style.display='none';
   var box=document.getElementById('rbox');
   box.style.display='block';
-  box.innerHTML=txt.replace(/\n/g,'<br>');
+  box.innerHTML=U3.escape(txt).replace(/\n/g,'<br>');
   var cb=document.getElementById('cpbtn');
   cb.style.display='inline-block'; cb.textContent='Копировать'; cb.className='cpbtn';
   document.getElementById('rhint').style.display='block';
@@ -960,17 +961,17 @@ function genGroup(){
     var hw=document.getElementById('p'+i+'_hw').value;
     var ts=document.getElementById('p'+i+'_ts').value;
     var note=document.getElementById('p'+i+'_note').value.trim();
-    var html=buildReport(name,teacher,GS.ui,v,g,a,att,PS[i].o,hw,PS[i].app,ts,gtt,note,PS[i].of);
+    var html=buildReport(name,teacher,GS.ui,v,g,a,att,PS[i].o,hw,PS[i].app,ts,gtt,note,PS[i].of,U3.read("p"+i));
 
     var card=document.createElement('div');
     card.className='card';
     var btnId='gcpbtn'+i;
     card.innerHTML=
       '<div class="greport-name">'+
-        '<span>'+name+'</span>'+
+        '<span>'+U3.escape(name)+'</span>'+
         '<button class="cpbtn" id="'+btnId+'" onclick="cpGroup(\''+btnId+'\','+i+')">Копировать</button>'+
       '</div>'+
-      '<div class="greport-text" id="greport'+i+'">'+html+'</div>';
+      '<div class="greport-text" id="greport'+i+'" style="white-space:pre-wrap">'+U3.escape(html)+'</div>';
     out.appendChild(card);
     count++;
   }
@@ -1059,7 +1060,8 @@ function saveOne(){
     name: name,
     teacher: currentTeacher,
     unitIdx: S.ui,
-    v: S.v, g: S.g, a: S.a,
+    v: S.ui===3?0:S.v, g: S.ui===3?0:S.g, a: S.ui===3?0:S.a,
+    u3: S.ui===3?U3.read("one"):undefined,
     att: document.getElementById('att').value,
     online: S.o,
     hw: document.getElementById('hw').value,
@@ -1094,7 +1096,8 @@ function saveGroup(){
       name: name,
       teacher: currentTeacher,
       unitIdx: GS.ui,
-      v: PS[i].v||0, g: PS[i].g||0, a: PS[i].a||0,
+      v: GS.ui===3?0:(PS[i].v||0), g: GS.ui===3?0:(PS[i].g||0), a: GS.ui===3?0:(PS[i].a||0),
+      u3: GS.ui===3?U3.read("p"+i):undefined,
       att: document.getElementById('p'+i+'_att').value,
       attOf: PS[i].of||'',
       online: PS[i].o,
@@ -1260,9 +1263,9 @@ function showYearReport(name){
 
   var summaryParts = [];
   var vn = parseFloat(avgV), gn = parseFloat(avgG), an = parseFloat(avgA);
-  summaryParts.push(vn>=4 ? 'лексику усваивает уверенно' : vn>=3 ? 'лексику осваивает постепенно' : 'лексика требует дополнительной работы');
-  summaryParts.push(gn>=4 ? 'грамматику применяет хорошо' : gn>=3 ? 'грамматика в процессе освоения' : 'грамматика требует дополнительного внимания');
-  summaryParts.push(an>=4 ? 'на уроках активен(а) и вовлечён(а)' : an>=3 ? 'на уроках в целом включается в работу' : 'активность на уроках требует поддержки');
+  summaryParts.push(isNaN(vn) ? 'лексика: общая оценка 1–5 не выставлялась' : vn>=4 ? 'лексику усваивает уверенно' : vn>=3 ? 'лексику осваивает постепенно' : 'лексика требует дополнительной работы');
+  summaryParts.push(isNaN(gn) ? 'грамматика: общая оценка 1–5 не выставлялась' : gn>=4 ? 'грамматику применяет хорошо' : gn>=3 ? 'грамматика в процессе освоения' : 'грамматика требует дополнительного внимания');
+  summaryParts.push(isNaN(an) ? 'работа на уроке: общая оценка 1–5 не выставлялась' : an>=4 ? 'на уроках активен(а) и вовлечён(а)' : an>=3 ? 'на уроках в целом включается в работу' : 'активность на уроках требует поддержки');
 
   var summaryHtml =
     '<p>Дорогие родители!</p><br>' +
@@ -1413,7 +1416,7 @@ function crmPull(){
       var nm=crmName(s.fio), i=crmRow(nm,used);
       if(!i){ notes.push(crmEsc(nm)+' — нет свободной строки'); return; }
       used[i]=1; n++;
-      var ni=document.getElementById('p'+i+'_name'); if(!ni.value.trim()) ni.value=nm;
+      var ni=document.getElementById('p'+i+'_name'); if(!ni.value.trim()){ ni.value=nm; ni.dispatchEvent(new Event("input",{bubbles:true})); }
       var missed=s.missed||[], made=s.made||[];
       var of=s.lessons||j.lessons; PS[i].of=of;
       var ai=document.getElementById('p'+i+CRM_ATT); ai.max=of; ai.value=Math.max(0,of-missed.length);
@@ -1526,3 +1529,6 @@ window.onload = function(){
 })();
 </script>
 
+
+<link rel="stylesheet" href="unit3.css?v=1">
+<script src="unit3.js?v=1"></script>
